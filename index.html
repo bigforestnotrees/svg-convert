@@ -1,0 +1,71 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"
+    ></script>
+    <script type="text/javascript">
+      var code;
+      var pyodide;
+      
+      async function getLatest() {
+        
+        let response = await fetch('convert2points.py');
+        let text = await response.text();
+        console.log(text);
+        code = text;
+        await main()
+        
+      }
+      async function main() {
+        
+        pyodide = await loadPyodide({
+          indexURL: "https://cdn.jsdelivr.net/pyodide/v0.21.3/full/",
+        });
+
+        await pyodide.runPythonAsync(code);
+      }
+
+      function bigSleep() {
+        return new Promise((resolve, error) => {
+          setTimeout(() => {
+            resolve("teehee");
+          }, 2000);
+        })
+      }
+      
+      async function convertToPoints(form) {
+        let mysvg = document.querySelector("#myfile").files[0];
+        var to_run = "";
+        var reader = new FileReader();
+        reader.onload = () => {
+          var content = reader.result; // this is the content!
+          console.log( content );
+          to_run = `result = get_parsed("""${content}""")`;
+          pyodide.runPythonAsync(to_run);
+          console.log(to_run)
+        };
+            
+        reader.readAsText(mysvg,'UTF-8');
+
+        // here we tell the reader what to do when it's done reading...
+        bigSleep().then()
+        .then(() => {output.innerHTML = pyodide.globals.get('result').replaceAll('\n', '<br>');});
+
+        
+      }
+      getLatest();
+    </script>
+    <form id="searchForm" action="#" onsubmit="convertToPoints(this);return false;"> 
+      <label for="myfile">Select an svg file:</label>
+      <input type="file" id="myfile" name="myfile"><br><br>
+      <input type="submit" value="Submit">
+    </form>
+    <div style="font-family: monospace" id="output">
+
+    </div>
+  </body>
+</html>
